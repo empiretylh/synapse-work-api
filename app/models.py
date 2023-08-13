@@ -1,0 +1,159 @@
+from email.policy import default
+from unittest.util import _MAX_LENGTH
+from django.db import models
+from django.contrib.auth.models import AbstractUser, Group
+
+from django.core.files.base import ContentFile
+# Create your models here.
+
+
+class User(AbstractUser):
+    name = models.CharField(max_length=255, null=False)
+    profileimage = models.ImageField(
+        upload_to="img/profile/%y/%mm/%dd", null=True)
+    email = models.EmailField(unique=True,null=True)
+    is_admin = models.BooleanField(default=True)
+
+    course = models.ManyToManyField('Course',through='CourseMember',related_name='people')
+    coursereq = models.ManyToManyField('Course',through='CourseRequest',related_name='peoplereq')
+
+
+class Course(models.Model):
+    coverimage = models.ImageField(upload_to="img/%y",null=True)
+    course_name = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=100,null=True)
+    course_price = models.CharField(max_length=50)
+    description = models.TextField(blank=True,null=True)
+    avaliable = models.BooleanField(default=False);
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+  
+    def __str__(self):
+        return self.course_name
+
+class CourseMember(models.Model):
+    person = models.ForeignKey(User,related_name='membership',on_delete=models.CASCADE)
+    course = models.ForeignKey(Course,related_name='membership',on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "%s is in group %s" % (self.person,self.course)
+
+class CourseRequest(models.Model):
+    coursename = models.ForeignKey(Course, on_delete=models.CASCADE)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    confirm = models.BooleanField(default=False)
+    joindate = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class Lessons(models.Model):
+    course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='course_title')
+    title = models.CharField(max_length=50)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+     
+    def __str__(self):
+       return self.title
+    
+
+# class Package(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     destination = models.CharField(max_length=255, null=False, blank=False)
+#     image = models.ImageField(upload_to='img/place/%y/%mm/%dd', null=True)
+#     cost = models.CharField(max_length=10, null=False)
+#     duration = models.CharField(max_length=255, null=True)
+#     description = models.TextField(null=True)
+#     people_limit = models.IntegerField(default=10)
+#     travel_sdate = models.DateTimeField()
+#     discount = models.TextField(null=True)
+
+#     def __str__(self):
+#         return self.destination
+
+
+# class FeedBack(models.Model):
+#     star = models.IntegerField()
+#     message = models.TextField(null=True,blank=True)
+#     package = models.ForeignKey(Package, on_delete=models.CASCADE,related_name='feedback')
+
+#     def __str__(self):
+#         return str(self.star) + '   ' + self.message
+
+
+# class Traveler(models.Model):
+#     name = models.CharField(max_length=255, null=False)
+#     phoneno = models.CharField(max_length=15, null=False)
+#     email = models.CharField(max_length=255, null=True)
+#     idcardno = models.CharField(
+#         max_length=22, null=True)  # 14/MaMaNa(N)/xxxxxx
+#     address = models.TextField(blank=True);
+    
+#     def __str__(self):
+#         return self.name
+
+
+
+# class PaymentInfo(models.Model):
+#     ReceiverName = models.CharField(max_length=255,null=False)
+#     ReceiverPhoneno =  models.CharField(max_length=25,null=False)
+#     SenderName = models.CharField(max_length=255,null=False)
+#     SenderPhoneno = models.CharField(max_length=255)
+#     Operator = models.CharField(max_length=20,default=None)
+#     Amount = models.CharField(max_length=20)
+
+#     def __str__(self):
+#         return self.ReceiverName + ' '+ self.Amount
+
+
+# class Booking(models.Model):
+#     travelcode = models.CharField(max_length=10)
+#     package = models.ForeignKey(
+#         Package, on_delete=models.CASCADE, related_name='mbooking')
+#     traveler = models.ForeignKey(
+#         Traveler, on_delete=models.CASCADE, related_name='booking')
+#     paymentinfo =  models.ForeignKey(PaymentInfo,on_delete=models.CASCADE,related_name='paymentinfo',default=None,null=True,blank=True)
+#     cost = models.CharField(max_length=10, null=False)
+#     paid = models.CharField(max_length=10, null=False)
+#     is_halfpaid = models.BooleanField(default=False)
+#     is_fullpaid = models.BooleanField(default=False)
+#     is_finish = models.BooleanField(default=True)
+#     booking_date = models.DateTimeField(auto_now_add=True)
+#     is_cancel = models.BooleanField(default=False)
+#     user = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True)
+
+
+#     def __str__(self):
+#         return self.travelcode + ' ' + self.traveler.name
+
+
+
+# class CompanyInformation(models.Model):
+#     companyname = models.CharField(max_length=255)
+#     phoneno = models.CharField(max_length=255)
+#     email = models.CharField(max_length=255)
+#     image = models.ImageField(
+#         upload_to='img/companyimage/%y%mm/%dd', null=True)
+#     companyaddress = models.TextField()
+
+
+#     def __str__(self) -> str:
+#         return self.companyname
+
+
+# class IncludePlace(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     placename = models.CharField(max_length=255, null=False)
+#     package = models.ForeignKey(
+#         Package, on_delete=models.CASCADE, related_name='includeplace')
+#     hotels = models.CharField(max_length=255, null=True, default='No Hotel')
+#     lengthofstay = models.CharField(max_length=255, null=True)
+#     image = models.ImageField(
+#         upload_to='img/includeplace/%y%mm/%dd', null=True)
+
+#     def __str__(self):
+#         return self.placename
+
+
+
