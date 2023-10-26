@@ -16,7 +16,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.authtoken.views import ObtainAuthToken
-
+from django.contrib.auth.decorators import user_passes_test
 
 # A Python program to demonstrate working of OrderedDict
 from collections import OrderedDict
@@ -166,13 +166,15 @@ class LoginView(APIView):
         username_or_email = request.data['username']
         password = request.data['password']
 
+        # user devices
+        device = request.data.get('device', None)
+
         user = None
         if '@' in username_or_email:
             b = models.User.objects.get(email=username_or_email)
             user = authenticate(username=b.username, password=password)
         else:
             user = authenticate(username=username_or_email, password=password)
-
 
         if not user:
             return Response({'error': 'Invalid Credentials'},
@@ -181,6 +183,8 @@ class LoginView(APIView):
         # user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
 
+        # user device
+        models.UserDevice.objects.create(user=user,device=device)
 
 
         # add custom data to response
@@ -192,6 +196,8 @@ class LoginView(APIView):
             'is_admin': user.is_admin,
             # add additional data fields here as needed
         }
+
+
         return Response(response_data)
 
 class CreateUserApiView(CreateAPIView):
@@ -210,7 +216,6 @@ class CreateUserApiView(CreateAPIView):
         # Create a token than will be used for future auth
         token = Token.objects.create(user=serializers.instance)
         token_data = {'token': token.key}
-
 
         return Response(
             {**serializers.data, **token_data},
@@ -306,18 +311,6 @@ class CourseAPIView(APIView):
 
 
 class LessonAPIView(APIView):
-    
-    def post(self,request,format=None):
-        print(request.data)
-        course_id = request.data['courseid']
-        course = models.Course.objects.get(id=course_id)    
-        lesson = models.Lessons.objects.filter(course=course)
-
-        se = serializers.LessonsSerializer(lesson,many=True)
-
-        return Response(se.data)
-
-
     # type = one or all or onlytitle
     # courseid
     # lessonid
@@ -344,3 +337,34 @@ class LessonAPIView(APIView):
             return Response(c)
         
         return Response(se.data)
+
+    # only admin user can post lesson
+    @user_passes_test(lambda u: u.is_admin)
+    def post(self,request,format=None):
+        course_id = request.data['courseid']
+        title = request.data['title']
+        content = request.data['content']
+        models.Lessons.objects.create(course_id=course_id,title=title,content=content)
+        
+        return Response(status=status.HTTP_201_CREATED)
+    
+    # only admin user can put lesson
+    @user_passes_test(lambda u: u.is_admin)
+    def put(self,request,format=None):
+        lesson_id = request.data['lessonid']
+        title = request.data['title']
+        content = request.data['content']
+        lesson = models.Lessons.objects.get(id=lesson_id)
+        lesson.title = title
+        lesson.content = content
+        lesson.save()
+        return Response(status=status.HTTP_201_CREATED)
+    
+    # only admin user can delete lesson
+    @user_passes_test(lambda u: u.is_admin)
+    def delete(self,request,format=None):
+        lesson_id = request.GET.get('lessonid')
+        lesson = models.Lessons.objects.get(id=lesson_id)
+        lesson.delete()
+        return Response(status=status.HTTP_201_CREATED) 
+    

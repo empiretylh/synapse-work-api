@@ -7,6 +7,7 @@ class TimeField(admin.ModelAdmin):
 
 admin.site.register(models.User)
 admin.site.register(models.Course, TimeField)
+admin.site.register(models.Content, TimeField)
 
 
 admin.site.register(models.Lessons, TimeField)
@@ -14,3 +15,7 @@ admin.site.register(models.Lessons, TimeField)
 # admin.site.register(models.Lessons)
 admin.site.register(models.CourseMember)
 admin.site.register(models.CourseRequest, TimeField)
+
+
+admin.site.register(models.CourseMenuGroup, TimeField) 
+admin.site.register(models.UserDevice)
