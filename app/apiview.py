@@ -229,6 +229,7 @@ class UserApiView(APIView):
 
     def get(self,request):
         types = request.GET.get('type')
+        print(request.GET)
         user = models.User.objects.get(username=request.user)
         if types == 'all':
             users = models.User.objects.all()
@@ -241,25 +242,29 @@ class UserApiView(APIView):
         return Response(ser.data)
 
     def put(self,request):
-      name = request.data['name']
-      email = request.data['email']
-      phoneno = request.data['phoneno']
-      address = request.data['address']
-      user = models.User.objects.get(username=request.user)
-      user.name = name 
-      user.email = email 
-      user.phoneno = phoneno 
-      user.address = address 
+      id = request.GET.get('id')
+
+      user = models.User.objects.get(id=id)
+      user.name = request.data.get('name',user.name) 
+      user.email = request.data.get('email', user.email) 
+      user.phone = request.data.get("phone",user.phone) 
+      user.username = request.data.get("username",user.username) 
+      user.is_admin = request.data.get("admin",user.is_admin)
+      user.is_editor = request.data.get("editor",user.is_editor)
+
       user.save()
 
       return Response(1)
 
     def delete(self,request):
-        models.User.objects.get(username=request.user)
+        current_user = models.User.objects.get(username=request.user)
         userid = request.GET.get('id')
-        user = models.User.objects.get(id=userid)
-        user.delete()
-        return Response(1)
+        if current_user.is_admin :
+       
+            user = models.User.objects.get(id=userid)
+            user.delete()
+
+        return Response(1)              
 
 
 
