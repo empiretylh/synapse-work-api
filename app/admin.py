@@ -19,3 +19,4 @@ admin.site.register(models.CourseRequest, TimeField)
 
 admin.site.register(models.CourseMenuGroup, TimeField) 
 admin.site.register(models.UserDevice)
+admin.site.register(models.Notification)

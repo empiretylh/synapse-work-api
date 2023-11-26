@@ -55,19 +55,26 @@ class CourseSerializer(serializers.ModelSerializer):
     # created_user = UserSerializer()
     class Meta:
         model = Course
-        fields = ['id', 'coverimage', 'course_name', 'short_name', 'course_price', 'description','avaliable', 'created_at', 'updated_at']
+        fields = ['id', 'coverimage', 'course_name', 'short_name', 'course_price', 'description','avaliable', 'created_at', 'updated_at','payment_info','telegram','semester']
 
     def create(self, validated_data):
-        user = self.context['request'].user
+        user = self.context['request'].user 
         validated_data['created_by'] = user
         return super().create(validated_data)
     
+class CourseMenu_Course(serializers.ModelSerializer):
+    class Meta:
+        model = CourseMenuGroup
+        fields = ['id', 'title', 'order']  # Add other fields as needed
+
+
 class CourseReadSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField()
+    category = CourseMenu_Course(many=True, read_only=True)
 
     class Meta:
         model = Course
-        fields = ['id', 'coverimage', 'course_name', 'short_name', 'course_price', 'description', 'avaliable', 'created_at', 'updated_at', 'created_by']
+        fields = ['id', 'coverimage', 'course_name', 'short_name', 'course_price', 'description', 'avaliable', 'created_at', 'updated_at', 'created_by','category','payment_info','telegram','semester']
 
     def get_created_by(self, obj):
         return obj.created_by.username 
@@ -98,6 +105,8 @@ class CourseMenuGroupSerializer(serializers.ModelSerializer):
         model = CourseMenuGroup
         fields = ['id', 'course', 'title', 'order', 'created_at', 'updated_at']
 
+
+
 class ContentSerializer(serializers.ModelSerializer):
     course_menu = CourseMenuGroupSerializer()
     class Meta:
@@ -112,7 +121,7 @@ class CourseMemberSerializer(serializers.ModelSerializer):
         fields = ['id', 'person', 'course']
 
 class CourseRequestSerializer(serializers.ModelSerializer):
-    coursename = CourseSerializer()
+    coursename = CourseReadSerializer()
     user = UserSerializer()
     class Meta:
         model = CourseRequest
@@ -145,3 +154,28 @@ class QuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
         fields = ['id', 'order', 'course_menu', 'title', 'created_at', 'updated_at', 'question', 'answers', 'correct_answer']
+
+#  user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='user_device')
+#     device = models.CharField(max_length=255)
+#     fcm_token =  models.CharField(max_length=255,null=True, default=None)
+#     created_at = models.DateTimeField(auto_now_add=True) # when user login
+#     updated_at = models.DateTimeField(auto_now=True) # when user logout
+
+class UserDeviceSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = models.UserDevice
+        fields = ['id', 'user', 'device', 'fcm_token', 'created_at', 'updated_at']
+
+
+#    title = models.CharField(max_length=255, null=True, blank=True)
+#     message = models.TextField(null=True, blank=True)
+#     action_url = models.URLField(max_length=500, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     sended_device = models.ManyToManyField(UserDevice)
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Notification
+        fields = ['id', 'title', 'message', 'action_url', 'created_at', 'updated_at', 'sended_device']
+    

@@ -1,7 +1,11 @@
+from rest_framework.permissions import AllowAny
+from ..serializers import CourseRequestSerializer
+from ..models import CourseRequest
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied
 from ..models import Course, CourseMenuGroup
 from ..serializers import CourseSerializer, CourseReadSerializer, CourseMenuGroupSerializer, CreateCourseMenuGroupSerializer, EditCourseMenuGroupSerializer, CourseRequestUpdateSerializer
+
 
 class CourseAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
@@ -13,7 +17,8 @@ class CourseAPIView(generics.ListCreateAPIView):
         if user.is_admin or user.is_editor:
             serializer.save()
         return super().perform_create(serializer)
-        
+
+
 class CourseListAPIView(generics.ListAPIView):
     serializer_class = CourseReadSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -27,14 +32,16 @@ class CourseListAPIView(generics.ListAPIView):
         elif user.is_editor:
             queryset = Course.objects.filter(created_by=user)
         else:
-            raise PermissionDenied("You don't have permission to view courses.")
+            queryset = Course.objects.filter(avaliable=True)
         if course_id:
             queryset = queryset.filter(id=course_id)
         return queryset
-        
+
+
 class IsCourseCreator(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.created_by == request.user or request.user.is_admin
+
 
 class CourseEditAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
@@ -48,24 +55,23 @@ class CourseDeleteAPIView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsCourseCreator]
 
 
+# Course Menu Group API VIEW--------------------------------------------------------------------
 
-### Course Menu Group API VIEW--------------------------------------------------------------------
-
-class CourseMenuGroupListCreateAPIView(generics.ListCreateAPIView): 
+class CourseMenuGroupListCreateAPIView(generics.ListCreateAPIView):
     queryset = CourseMenuGroup.objects.all()
     serializer_class = CreateCourseMenuGroupSerializer
+
 
 class CourseMenuGroupRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CourseMenuGroup.objects.all()
     serializer_class = EditCourseMenuGroupSerializer
 
-from rest_framework.permissions import AllowAny
 
 class CourseMenuGroupListAPIView(generics.ListAPIView):
     serializer_class = CourseMenuGroupSerializer
     permission_classes = [AllowAny]
-    
-    #Course Menu Group filter by course id
+
+    # Course Menu Group filter by course id
     def get_queryset(self):
         course_id = self.request.query_params.get('course_id')
         if course_id:
@@ -74,7 +80,6 @@ class CourseMenuGroupListAPIView(generics.ListAPIView):
             queryset = CourseMenuGroup.objects.all()
         return queryset
 
-   
 
 class CourseMenuGroupDeleteAPIView(generics.DestroyAPIView):
     queryset = CourseMenuGroup.objects.all()
@@ -82,10 +87,8 @@ class CourseMenuGroupDeleteAPIView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsCourseCreator]
 
 
-# CourseRequest 
+# CourseRequest
 
-from ..models import CourseRequest
-from ..serializers import CourseRequestSerializer
 
 class CourseRequestListCreateAPIView(generics.ListCreateAPIView):
     queryset = CourseRequest.objects.all()
@@ -104,13 +107,16 @@ class CourseRequestListAPIView(generics.ListAPIView):
         if user.is_admin:
             queryset = CourseRequest.objects.all()
         elif user.is_editor:
-            queryset = CourseRequest.objects.filter(coursename__created_by=user)
+            queryset = CourseRequest.objects.filter(
+                coursename__created_by=user)
         else:
             queryset = CourseRequest.objects.filter(user=user)
-            
+
+        print(user, queryset)
         return queryset
 
-# Update and Destory 
+# Update and Destory
+
 
 class CourseRequestRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CourseRequest.objects.all()
@@ -123,4 +129,3 @@ class CourseRequestRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAP
         if user.is_admin or user.is_editor:
             serializer.save()
         return super().perform_update(serializer)
-    

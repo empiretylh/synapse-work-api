@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from .Course import course
 from .Lesson import lesson
-
+from .Noti import Noti
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
@@ -32,10 +32,22 @@ urlpatterns = [
 
     # Course Request
 
-     path('api/course/request/list',course.CourseRequestListAPIView.as_view(),name='course_request_list_api'),
-     path('api/course/request/create',course.CourseRequestListCreateAPIView.as_view(),name='course_request_create_api'),
-     path('api/editor/course/request/<int:pk>',course.CourseRequestRetrieveUpdateDestroyAPIView.as_view(),name='course_request_edit_api'),
-    #--------
+    path('api/course/request/list', course.CourseRequestListAPIView.as_view(),
+         name='course_request_list_api'),
+    path('api/course/request/create', course.CourseRequestListCreateAPIView.as_view(),
+         name='course_request_create_api'),
+    path('api/editor/course/request/<int:pk>',
+         course.CourseRequestRetrieveUpdateDestroyAPIView.as_view(), name='course_request_edit_api'),
+    # --------
+
+
+    # Notification
+    path('api/editor/notification/create',
+         Noti.NotificationListCreateAPIView.as_view(), name='notification_create_api'),
+
+    path('api/editor/notification/list',
+         Noti.NotificationListAPIView.as_view(), name='notification_list_api'),
+     path('api/editor/device/list', Noti.UserDeviceListAPIView.as_view(),name="delvice_list_api"),
 
     path('api/editor/course/coursemenu/create',
          course.CourseMenuGroupListCreateAPIView.as_view(), name='course_menu_group_api'),

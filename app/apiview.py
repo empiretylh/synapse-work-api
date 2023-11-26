@@ -168,6 +168,7 @@ class LoginView(APIView):
 
         # user devices
         device = request.data.get('device', None)
+        fcm_token  = request.data.get('fcm_token', None)
 
         user = None
         if '@' in username_or_email:
@@ -184,7 +185,7 @@ class LoginView(APIView):
         token, created = Token.objects.get_or_create(user=user)
 
         # user device
-        models.UserDevice.objects.create(user=user,device=device)
+        models.UserDevice.objects.create(user=user,device=device, fcm_token=fcm_token)
 
 
         # add custom data to response
@@ -206,6 +207,8 @@ class CreateUserApiView(CreateAPIView):
     serializer_class = serializers.CreateUserSerializer
 
     def post(self, request):
+        device = request.data.get('device', None)
+        fcm_token  = request.data.get('fcm_token', None)
 
         print(request.data)
         serializers = self.get_serializer(data=request.data)
@@ -216,6 +219,8 @@ class CreateUserApiView(CreateAPIView):
         # Create a token than will be used for future auth
         token = Token.objects.create(user=serializers.instance)
         token_data = {'token': token.key}
+
+        models.UserDevice.objects.create(user=serializers.instance,device=device, fcm_token=fcm_token)
 
         return Response(
             {**serializers.data, **token_data},
@@ -310,7 +315,10 @@ class CourseAPIView(APIView):
       print(request.data['courseid'])
       course_id = request.data['courseid']
       course = models.Course.objects.get(id=course_id)
-      models.CourseRequest.objects.create(coursename=course,user=request.user)
+      cr =   models.CourseRequest.objects.create(coursename=course,user=request.user)
+      if course.course_price == 'free' or course.course_price == 'Free' or course.course_price == 'FREE':
+          cr.confirm = True
+          cr.save()
 
       return Response(status=status.HTTP_201_CREATED)
 
@@ -321,20 +329,20 @@ class LessonAPIView(APIView):
     # lessonid
 
     def get(self,request,format=None):
-        course_id = request.GET.get('courseid')
+        course_menu_id = request.GET.get('courseid')
         course_type = request.GET.get('type')
         lesson_id = request.GET.get('lessonid')
 
-        course = models.Course.objects.get(id=course_id)    
+        # course = models.Course.objects.get(id=course_id)    
        
         if course_type == 'all':
-            lesson = models.Lessons.objects.filter(course=course)
+            lesson = models.Lessons.objects.filter(course_menu__id=course_menu_id)
             se = serializers.LessonsSerializer(lesson,many=True)
         elif course_type == 'one':
-            lesson = models.Lessons.objects.get(course=course,id=lesson_id)
+            lesson = models.Lessons.objects.get(course_menu__id=course_menu_id,id=lesson_id)
             se = serializers.LessonsSerializer(lesson)
         elif course_type == 'onlytitle':
-            lesson = models.Lessons.objects.filter(course=course)
+            lesson = models.Lessons.objects.filter(course_menu__id=course_menu_id)
             c = []
             for a in lesson:
                 c.append({"id": a.id , "title" : a.title})
@@ -371,5 +379,4 @@ class LessonAPIView(APIView):
         lesson_id = request.GET.get('lessonid')
         lesson = models.Lessons.objects.get(id=lesson_id)
         lesson.delete()
-        return Response(status=status.HTTP_201_CREATED) 
-    
+        return Response(status=status.HTTP_201_CREATED)

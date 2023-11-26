@@ -29,6 +29,7 @@ class User(AbstractUser):
 class UserDevice(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='user_device')
     device = models.CharField(max_length=255)
+    fcm_token =  models.CharField(max_length=255,null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True) # when user login
     updated_at = models.DateTimeField(auto_now=True) # when user logout
 
@@ -42,18 +43,22 @@ class Course(models.Model):
     short_name = models.CharField(max_length=100,null=True)
     course_price = models.CharField(max_length=50)
     description = models.TextField(blank=True,null=True)
-    avaliable = models.BooleanField(default=False);
+    avaliable = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='created_user')
-    
+    payment_info = models.TextField(blank=True,null=True, default="KBZ Pay - 09699227094 (Mg Thura Lin Htut)")
+    telegram = models.CharField(max_length=100, default="synapsework")
+    semester = models.CharField(max_length=100, default="Semester 2")
+
+
     def __str__(self):
         return self.course_name
 
 # in courses there are many course_menu_groups that contains many course_menus and content
 
 class CourseMenuGroup(models.Model):
-    course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='course_menu_group')
+    course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='category')
     title = models.CharField(max_length=50)
     order = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -115,3 +120,14 @@ class Quiz(Content):
 
 class Answer(models.Model):
     answer_text = models.CharField(max_length=255)
+
+
+# from django.db import models
+
+class Notification(models.Model):
+    title = models.CharField(max_length=255, null=True, blank=True)
+    message = models.TextField(null=True, blank=True)
+    action_url = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sended_device = models.ManyToManyField(UserDevice)

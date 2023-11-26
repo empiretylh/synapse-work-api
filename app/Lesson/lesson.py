@@ -36,6 +36,7 @@ class LessonsListAPIView(APIView):
     def get(self, request):
         lesson_id = request.query_params.get('lesson_id')
         course_menu_id = request.query_params.get('coursemenu_id')
+        
         if lesson_id:
             queryset = Lessons.objects.filter(id=lesson_id)
         elif course_menu_id:
@@ -44,6 +45,8 @@ class LessonsListAPIView(APIView):
             queryset = Lessons.objects.filter(id=lesson_id,course_menu__id=course_menu_id)
         else:
             queryset = Lessons.objects.all()
+
+
 
         serializer = LessonsSerializer(queryset, many=True)
         return Response(serializer.data)
