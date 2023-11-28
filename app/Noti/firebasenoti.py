@@ -14,7 +14,10 @@ def send_multicast_message(device_tokens, message_title, message_body, custom_da
         ),
         data=custom_data,
         tokens=device_tokens,
-
+        android=messaging.AndroidConfig(
+            ttl=3600,
+            priority='high'
+        ),
     )
 
     # Send the multicast message

@@ -5,7 +5,7 @@ from . import models
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from .models import User, Course, Content, CourseMember, CourseMenuGroup, CourseRequest, Lessons, QnA, Quiz, Answer
-
+from .Noti.firebasenoti import send_multicast_message
 
 from django.utils import timezone
 
@@ -131,6 +131,7 @@ class CourseRequestUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseRequest
         fields = ['id', 'confirm', 'created_at', 'updated_at']
+
 
 class LessonsSerializer(serializers.ModelSerializer):
     class Meta:

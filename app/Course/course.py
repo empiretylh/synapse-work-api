@@ -3,9 +3,9 @@ from ..serializers import CourseRequestSerializer
 from ..models import CourseRequest
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied
-from ..models import Course, CourseMenuGroup
+from ..models import Course, CourseMenuGroup, UserDevice, Notification
 from ..serializers import CourseSerializer, CourseReadSerializer, CourseMenuGroupSerializer, CreateCourseMenuGroupSerializer, EditCourseMenuGroupSerializer, CourseRequestUpdateSerializer
-
+from ..Noti.firebasenoti import send_multicast_message
 
 class CourseAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
@@ -127,5 +127,34 @@ class CourseRequestRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAP
     def perform_update(self, serializer):
         user = self.request.user
         if user.is_admin or user.is_editor:
-            serializer.save()
+            instance =  serializer.save()
+          
+          
+            user_device = UserDevice.objects.filter(user=instance.user)
+
+            fcm_tokens = []
+            for ud in user_device:
+                fcm_tokens.append(ud.fcm_token)
+
+            coursename = instance.coursename.course_name
+
+            title = "Course Request Approved!"
+            message = "You request for " + coursename + " is approved! You can now access to this course."
+            data = {
+                "url": "sw://course/" + str(instance.coursename.id)
+            }
+
+            notification = Notification.objects.create(
+                title=title, message=message, action_url=data['url'])
+            
+            notification.sended_device.set(user_device)
+
+            send_multicast_message(fcm_tokens, title, message, data)
+           
+
+            
+            
+
+         
+
         return super().perform_update(serializer)

@@ -23,11 +23,13 @@ class NotificationListCreateAPIView(APIView):
             serializer = NotificationSerializer(data=request.data)
 
             if serializer.is_valid():
+                print(serializer.validated_data)
+                serializer.save()
+
                 sended_device = request.data.get('sended_device')
                 title = request.data.get('title')
                 message = request.data.get('message')
                 action_url = request.data.get('action_url')
-
 
 
                 fcm_tokens = []
@@ -44,7 +46,6 @@ class NotificationListCreateAPIView(APIView):
                 # print(fcm_tokens)
                 send_multicast_message(fcm_tokens,title, message, data)
 
-                serializer.save()
                 return Response(serializer.data)
             else:
                 return Response(serializer.errors)
@@ -55,11 +56,13 @@ class NotificationListCreateAPIView(APIView):
 class NotificationListAPIView(APIView):
     def get(self, request):
         notification_id = request.query_params.get('id')
+
         
         if notification_id:
             queryset = Notification.objects.filter(id=notification_id)
         else:
-            queryset = Notification.objects.all()
+            user_devices = UserDevice.objects.filter(user=request.user)
+            queryset = Notification.objects.filter(sended_device__in=user_devices)
 
 
 
