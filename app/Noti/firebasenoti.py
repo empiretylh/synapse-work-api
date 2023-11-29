@@ -1,6 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials, messaging
-
+import os
 # Get the absolute path to the certificate file
 cert_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'synapsework_firebase.json')
 
